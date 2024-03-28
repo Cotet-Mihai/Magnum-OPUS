@@ -1,0 +1,3 @@
+Used libraries:
+-customtkinter
+-pypodbc
