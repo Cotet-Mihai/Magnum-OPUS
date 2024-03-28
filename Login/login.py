@@ -2,11 +2,13 @@ import customtkinter as ctk
 from basic_functions import show_the_call
 from colors import Colors
 from images.PNG.png import Images
+from database import SqlServer, MyProfile, SqlAccounts
 
 
 class Login:
     def __init__(self, root: ctk.windows.ctk_tk.CTk) -> None:
-        show_the_call(Login.__name__)
+
+        show_the_call(Login)
 
         # Root Adj
         self.root = root
@@ -22,6 +24,7 @@ class Login:
         self.widgets()
 
     def widgets(self) -> None:
+        # Frame that contains all login widgets
         self.frame = ctk.CTkFrame(
             self.root,
             width=400, height=600,
@@ -30,6 +33,7 @@ class Login:
         )
         self.frame.place(x=0, y=0)
 
+        # Style element
         self.red_dot = ctk.CTkFrame(
             self.frame,
             width=400, height=400,
@@ -38,6 +42,7 @@ class Login:
         )
         self.red_dot.place(anchor='center', x=200, y=0)
 
+        # Logo PNG
         self.logo = ctk.CTkLabel(
             self.red_dot,
             text='',
@@ -45,6 +50,7 @@ class Login:
         )
         self.logo.place(anchor='center', x=200, y=260)
 
+        # Brand Name
         self.text = ctk.CTkLabel(
             self.red_dot,
             text_color='white',
@@ -53,6 +59,7 @@ class Login:
         )
         self.text.place(anchor='center', x=200, y=330)
 
+        # Username PNG
         self.username_img = ctk.CTkLabel(
             self.frame,
             text='',
@@ -60,6 +67,7 @@ class Login:
         )
         self.username_img.place(anchor='center', x=200, y=255)
 
+        # Username Entry
         self.username = ctk.CTkEntry(
             self.frame,
             font=('montserrat regular', 15),
@@ -74,6 +82,7 @@ class Login:
         )
         self.username.place(anchor='center', x=200, y=300)
 
+        # Password PNG
         self.password_img = ctk.CTkLabel(
             self.frame,
             text='',
@@ -81,6 +90,7 @@ class Login:
         )
         self.password_img.place(anchor='center', x=200, y=355)
 
+        # Password Entry
         self.password = ctk.CTkEntry(
             self.frame,
             font=('montserrat regular', 15),
@@ -95,8 +105,9 @@ class Login:
 
         )
         self.password.place(anchor='center', x=200, y=400)
-        self.password.bind('<Return>', self.invoke_login_button)
+        self.password.bind('<Return>', self.invoke_login_button)  # When you press enter, the login button is pressed
 
+        # Error Label
         self.errorLabel = ctk.CTkLabel(
             self.frame,
             font=("Montserrat ExtraBold", 15),
@@ -104,6 +115,7 @@ class Login:
             text_color="#cf0a0a"
         )
 
+        # Frame that contains the buttons
         self.buttons_frame = ctk.CTkFrame(
             self.frame,
             width=400, height=60,
@@ -112,6 +124,7 @@ class Login:
         )
         self.buttons_frame.place(anchor='s', x=200, y=600)
 
+        # Login Button
         self.login_button = ctk.CTkButton(
             self.buttons_frame,
             width=200, height=60,
@@ -124,6 +137,7 @@ class Login:
         )
         self.login_button.place(anchor='center', x=100, y=30)
 
+        # Close Button
         self.close_button = ctk.CTkButton(
             self.buttons_frame,
             width=200, height=60,
@@ -137,46 +151,107 @@ class Login:
         self.close_button.place(anchor='center', x=300, y=30)
 
     def verify_authentification(self) -> None:
+        """
+        :return: If it matches, go to the main menu (depending on the role type),
+            if it doesn't match, display the Error Label
+        Execute the query of the database if there is a user with the entered name and password.
+        """
 
         # We extract the authentication data and store them as variables
         username = self.username.get()
         password = self.password.get()
 
-        # Connexion DataBase
-        conn = SQL_Server.connStr
-        my_cursor = conn.cursor()
+        try:
+            # Connection to Guest DataBase
+            self.guest_database = SqlServer('Guest', SqlAccounts.guest)
+            self.guest_conn = self.guest_database.get_connStr()
+            self.guest_cursor = self.guest_conn.cursor()
 
-        # Use parameters to avoid SQL injection
-        query = 'SELECT * FROM Users WHERE Username=? And Password=?'
-        search = my_cursor.execute(query, (username, password))
+            # Use parameters to avoid SQL injection
+            all_users_query = 'SELECT * FROM Guest.dbo.Users WHERE Username=? And Password=?'
+            all_users_search = self.guest_cursor.execute(all_users_query, (username, password))
 
-        # Get information from selected row
-        result = search.fetchone()
+            # Get information from selected row
+            result = all_users_search.fetchone()
 
-        # If result it s not Null
-        if result:
-            # Set MyProfile
-            MyProfile.my_Profile = MyProfile(username, password, result[2], result[1], result[5], result[-1], result[6], result[0])
-            role = result[-1]
+            # If result it s not Null
+            if result is not None:
 
-            # Select Main_Menu by Role
-            match role:
-                case 'Admin':
-                    pass
-                case 'Manager':
-                    pass
-                case 'Casier':
-                    print('Type Account: Casier')
-                    self.go_to_menu(Main_menu)
+                # Save information in a dictionary:
+                logged_user: dict = {'ID': result[0],
+                                     'Username': result[1],
+                                     'Password': result[2],
+                                     'Role': result[3]
+                                     }
 
-        # Else show error label
-        else:
-            self.errorLabel.place(anchor='center', x=200, y=480)
-            print("Autentificare eșuată.")
+                match logged_user['Role']:
+
+                    case 'Admin':
+                        print('Type Account: Admin')
+
+                        all_admin_query = ('SELECT * FROM Guest.dbo.Admin_Accounts WHERE ID=? And User_Name=?'
+                                           ' AND Password=?')
+                        all_admin_search = self.guest_cursor.execute(all_admin_query,
+                                                                     (logged_user['ID'],logged_user['Username'],
+                                                                      logged_user['Password']))
+                        user = all_admin_search.fetchone()
+
+                        user_found: dict = {'ID': user[0],
+                                            'Last_Name': user[1],
+                                            'First_Name': user[2],
+                                            'Username': user[3],
+                                            'Password': user[4],
+                                            'Age': user[5],
+                                            'Sex': user[6],
+                                            'Salary': user[7],
+                                            'Phone_Number': user[8],
+                                            'Email': user[9]}
+
+                        MyProfile.my_Profile = MyProfile(user_found['ID'], user_found['Last_Name'],
+                                                         user_found['First_Name'], user_found['Username'],
+                                                         user_found['Password'], user_found['Age'], user_found['Sex'],
+                                                         user_found['Salary'], user_found['Phone_Number'],
+                                                         user_found['Email'], 'Admin'
+                                                         )
+
+
+
+                    case 'Manager':
+                        print('Type Account: Manager')
+                    case 'Casier':
+                        print('Type Account: Casier')
+
+
+
+                """# Set MyProfile
+                MyProfile.my_Profile = MyProfile(username, password, result[2],
+                                                 result[1], result[5], result[-1],
+                                                 result[6], result[0])
+                role = result[-1]
+
+                # Select Main_Menu by Role
+                match role:
+                    case 'Admin':
+                        print('Type Account: Admin')
+                    case 'Manager':
+                        print('Type Account: Manager')
+                    case 'Casier':
+                        print('Type Account: Casier')"""
+
+            # Else show error label
+            else:
+                self.errorLabel.place(anchor='center', x=200, y=480)
+                print("Autentificare eșuată.")
+
+        except Exception as e:
+            print(e)
+
     def invoke_login_button(self, event=None) -> None:
         self.login_button.invoke()
+
     def go_to_menu(self, page) -> None:
         self.frame.destroy()
         page(self.root)
+
     def close_app(self) -> None:
         self.root.quit()
