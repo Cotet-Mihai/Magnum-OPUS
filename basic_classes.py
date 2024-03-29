@@ -2,6 +2,7 @@ import customtkinter as ctk
 from colors import Colors
 from images.PNG.png import Images
 from typing import List, Callable
+from basic_functions import show_the_call
 
 
 class LeftMenu:
@@ -13,6 +14,7 @@ class LeftMenu:
         :param text_buttons: it must contain the text of the 4 menu buttons
         :param list_of_functions: it must contain the functions of the 4 menu buttons
         """
+        show_the_call(LeftMenu)
 
         # Root
         self.root = root
@@ -155,6 +157,8 @@ class ExitPopUp:
         """
         :param root: Need to be the Main Root
         """
+        show_the_call(ExitPopUp)
+
         # Main Root
         self.root = root
 
