@@ -1,6 +1,6 @@
 Used libraries:
 
 -customtkinter
--pypodbc
+-pypyodbc
 -typeing
 -decimal
