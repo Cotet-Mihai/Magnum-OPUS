@@ -3,6 +3,7 @@ from basic_functions import show_the_call
 from colors import Colors
 from images.PNG.png import Images
 from database import SqlServer, MyProfile, SqlAccounts
+from Admin_Pages.main_menu import MainMenu as AdminMainMenu
 
 
 class Login:
@@ -10,8 +11,9 @@ class Login:
 
         show_the_call(Login)
 
-        # Root Adj
+        # Root Adjustments
         self.root = root
+
         # Change the size of the root and make it appear in the center of the screen
         self.root.geometry(
             "400x600+{}+{}".format(
@@ -174,7 +176,7 @@ class Login:
             # Get information from selected row
             result = all_users_search.fetchone()
 
-            # If result it s not Null
+            # If result it s not None
             if result is not None:
 
                 # Save information in a dictionary:
@@ -183,19 +185,25 @@ class Login:
                                      'Password': result[2],
                                      'Role': result[3]
                                      }
-
+                # Match Role with level access
                 match logged_user['Role']:
 
+                    # CASE ADMIN
                     case 'Admin':
                         print('Type Account: Admin')
 
+                        # Query to get the admin account
                         all_admin_query = ('SELECT * FROM Guest.dbo.Admin_Accounts WHERE ID=? And User_Name=?'
                                            ' AND Password=?')
                         all_admin_search = self.guest_cursor.execute(all_admin_query,
-                                                                     (logged_user['ID'],logged_user['Username'],
+                                                                     (logged_user['ID'], logged_user['Username'],
                                                                       logged_user['Password']))
                         user = all_admin_search.fetchone()
 
+                        # After we get all the infromations we need from Database we close the connection
+                        self.guest_conn.close()
+
+                        # Save all infromations in a dictionary
                         user_found: dict = {'ID': user[0],
                                             'Last_Name': user[1],
                                             'First_Name': user[2],
@@ -207,38 +215,24 @@ class Login:
                                             'Phone_Number': user[8],
                                             'Email': user[9]}
 
+                        # Set my_profile with dictonary result
                         MyProfile.my_Profile = MyProfile(user_found['ID'], user_found['Last_Name'],
                                                          user_found['First_Name'], user_found['Username'],
                                                          user_found['Password'], user_found['Age'], user_found['Sex'],
                                                          user_found['Salary'], user_found['Phone_Number'],
                                                          user_found['Email'], 'Admin'
                                                          )
+                        self.go_to_menu(AdminMainMenu)
 
-
-
+                    # CASE MANAGER
                     case 'Manager':
                         print('Type Account: Manager')
-                    case 'Casier':
-                        print('Type Account: Casier')
 
+                    # CASE Cashier
+                    case 'Cashier':
+                        print('Type Account: Cashier')
 
-
-                """# Set MyProfile
-                MyProfile.my_Profile = MyProfile(username, password, result[2],
-                                                 result[1], result[5], result[-1],
-                                                 result[6], result[0])
-                role = result[-1]
-
-                # Select Main_Menu by Role
-                match role:
-                    case 'Admin':
-                        print('Type Account: Admin')
-                    case 'Manager':
-                        print('Type Account: Manager')
-                    case 'Casier':
-                        print('Type Account: Casier')"""
-
-            # Else show error label
+            # If result is None
             else:
                 self.errorLabel.place(anchor='center', x=200, y=480)
                 print("Autentificare eșuată.")

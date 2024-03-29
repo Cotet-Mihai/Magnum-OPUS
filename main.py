@@ -2,14 +2,18 @@ import customtkinter as ctk
 from Login.login import Login
 
 if __name__ == '__main__':
-    # Root Adj
-    root = ctk.CTk()  # Root
-    root._set_appearance_mode("Dark")  # Set appearance mode to Dark
-    root.lift()  # We bring the window to the foreground
-    root.iconbitmap('images/ICO/icon logo.ico')  # Icon Logo
-    root.resizable(False, False)  # Window cant be resizable
-    root.title("Magnum OPUS")  # Title
+    # Main Root
+    main_root = ctk.CTk()
 
-    Login(root)
+    # Main Root Adjustements
+    main_root._set_appearance_mode("Dark")  # Set appearance mode to Dark
+    main_root.lift()  # We bring the window to the foreground
+    main_root.iconbitmap('images/ICO/icon logo.ico')  # Icon Logo
+    main_root.resizable(False, False)  # Window cant be resizable
+    main_root.title("Magnum OPUS")  # Title
 
-    root.mainloop()  # Main loop for root
+    # Call Login
+    Login(main_root)
+
+    # Main loop for root
+    main_root.mainloop()
