@@ -82,6 +82,7 @@ class Personal:
             corner_radius=15
         )
 
+    # //////////////////////////////////////// ADD NEW LOCATION ////////////////////////////////////////
     def add_location_button_widgets(self) -> None:
 
         # Hide the other pages
@@ -400,11 +401,13 @@ class Personal:
     def select_type_location(self, value) -> None:
         match value:
             case 'Cazino':
-                add_location(self.main_add_location, 'Adauga un nou cazino', 'Casinos')
+                AddLocation(self.main_add_location, 'Adauga un nou cazino', 'Casinos')
             case 'Agentie':
-                add_location(self.main_add_location, 'Adauga o noua Agentie', 'Agencies')
+                AddLocation(self.main_add_location, 'Adauga o noua Agentie', 'Agencies')
             case 'Partener':
-                add_location(self.main_add_location, 'Adauga un nou Partener', 'Partnerships')
+                AddLocation(self.main_add_location, 'Adauga un nou Partener', 'Partnerships')
+
+    # //////////////////////////////////////// ADD NEW PERSON ///////////////////////////////////////////
 
     def add_person_button_widgets(self) -> None:
 
@@ -430,7 +433,7 @@ class Personal:
 
                 self.manager_tab = ctk.CTkFrame(
                     self.main_add_person,
-                    width=505, height=400,
+                    width=500, height=400,
                     corner_radius=15,
                     fg_color='red'
                 )
@@ -438,18 +441,185 @@ class Personal:
 
             case 'Casier':
                 print('Selected Type: Casier')
-
-                self.casier_tab = ctk.CTkFrame(
-                    self.main_add_person,
-                    width=505, height=400,
-                    corner_radius=15,
-                    fg_color='yellow'
-                )
-                self.casier_tab.place(x=15, y=60)
+                AddCashier(self.main_add_person)
 
 
-class add_location:
-    def __init__(self, root , title_text: str, tabel_name: str):
+class AddCashier:
+    def __init__(self, main_add_person):
+        # Root
+        self.main_add_person = main_add_person
+
+        # Widgets
+        self.widgets()
+
+    def widgets(self):
+        # Main Frame
+        self.casier_tab = ctk.CTkFrame(
+            self.main_add_person,
+            width=500, height=400,
+            corner_radius=15
+        )
+        self.casier_tab.place(x=15, y=60)
+
+        # Title
+        self.text_title = ctk.CTkLabel(
+            self.casier_tab,
+            text='Adauga un angajat nou',
+            font=('INTER BOLD', 20)
+        )
+        self.text_title.place(anchor='center', x=250, y=25)
+
+        # Last Name
+        self.last_name = ctk.CTkEntry(
+            self.casier_tab,
+            placeholder_text='Nume'
+        )
+        self.last_name.place(anchor='center', x=250, y=100)
+
+        # First Name
+        self.first_name = ctk.CTkEntry(
+            self.casier_tab,
+            placeholder_text='Prenume'
+        )
+        self.first_name.place(anchor='center', x=250, y=130)
+
+        # Age
+        self.age = ctk.CTkEntry(
+            self.casier_tab,
+            placeholder_text='Varsta'
+        )
+        self.age.place(anchor='center', x=250, y=160)
+
+        # Sex
+        self.sex = ctk.CTkSegmentedButton(
+            self.casier_tab,
+            values=['M', 'F']
+        )
+        self.sex.place(anchor='center', x=250, y=190)
+
+        # Salary
+        self.salary = ctk.CTkEntry(
+            self.casier_tab,
+            placeholder_text='Salariu Brut'
+        )
+        self.salary.place(anchor='center', x=250, y=220)
+
+        # Phone Number
+        self.phone_number = ctk.CTkEntry(
+            self.casier_tab,
+            placeholder_text='Numar de telefon'
+        )
+        self.phone_number.place(anchor='center', x=250, y=250)
+
+        # Email
+        self.email = ctk.CTkEntry(
+            self.casier_tab,
+            placeholder_text='Email'
+        )
+        self.email.place(anchor='center', x=250, y=280)
+
+        # Base Location
+        self.base_location = ctk.CTkEntry(
+            self.casier_tab,
+            placeholder_text='Locatia de baza'
+        )
+        self.base_location.place(anchor='center', x=250, y=310)
+
+        # Add Button
+        self.add_button = ctk.CTkButton(
+            self.casier_tab,
+            text='Adauga',
+            command=self.add_cashier_to_databases
+        )
+        self.add_button.place(anchor='center', x=250, y=380)
+
+    def add_cashier_to_databases(self):
+        # STEP ONE (save person to Users tabel from Guest DataBase)
+
+        # We set initial username with the last and first name
+        username: str = f'{self.last_name.get()} {self.first_name.get()}'
+        # We set initial password to 123, at the first registration we force the user to change the password
+        password: str = '123'
+        # Role gonna be Casheir
+        role: str = 'Cashier'
+
+        # Connect to server
+        guest_database = SqlServer('Guest', SqlAccounts.admin)
+        # Get the connStr
+        guest_database_con = guest_database.connStr
+        # Create cursor
+        guest_database_cursor = guest_database_con.cursor()
+
+        # Insert into Users Tabel all values
+        add_cashier_to_users = 'INSERT INTO Users (username, password, role) VALUES (?, ?, ?)'
+        values_users = (username, password, role)
+
+        # Execute addition
+        guest_database_cursor.execute(add_cashier_to_users, values_users)
+        # Commit addition
+        guest_database_con.commit()
+
+        # We get the id that was created automatically
+        get_id_from_users = f"SELECT ID FROM Users WHERE username = '{username}'"
+        guest_database_cursor.execute(get_id_from_users)
+        result = guest_database_cursor.fetchall()
+
+        # Close connection
+        guest_database_con.close()
+
+        print('Saved successfully in the Users table')
+
+        # STEP TWO (save person to Cashier_Accounts with all the infromations)
+
+        # Save all information about the user and store it in a dictionary
+        all_info: dict = {'ID': result[0][0],
+                          'Last Name': self.last_name.get(),
+                          'First Name': self.first_name.get(),
+                          'Username': f'{self.last_name.get()} {self.first_name.get()}',
+                          'Password': password,
+                          'Age': self.age.get(),
+                          'Sex': self.sex.get(),
+                          'Salary': self.salary.get(),
+                          'Phone': self.phone_number.get(),
+                          'Email': self.email.get(),
+                          'Base Location': self.base_location.get()}
+
+        # Connect to server
+        locations_database = SqlServer('Guest', SqlAccounts.admin)
+        # Get the connStr
+        locations_database_con = locations_database.connStr
+        # Create cursor
+        locations_database_cursor = locations_database_con.cursor()
+
+        # Insert into Cashier_Accounts Tabel all values
+        add_cashier_to_locations = ('INSERT INTO Cashier_Accounts (ID, Last_Name, First_name, User_Name, Password,'
+                                    'Age, Sex, Salary, Phone_Number, Email, Base_Location)'
+                                    'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')
+
+        values_locations = (all_info['ID'], all_info['Last Name'], all_info['First Name'], all_info['Username'],
+                            all_info['Password'], all_info['Age'], all_info['Sex'], all_info['Salary'],
+                            all_info['Phone'], all_info['Email'], all_info['Base Location'])
+
+        # Execute addition
+        locations_database_cursor.execute(add_cashier_to_locations, values_locations)
+
+        # Commit addition
+        locations_database_con.commit()
+
+        # Close connection
+        locations_database_con.close()
+
+        print('Saved successfully in the Cashier_Accounts table')
+
+
+class AddLocation:
+    def __init__(self, root, title_text: str, tabel_name: str) -> None:
+        """
+        :param root: Need to be a Frame
+        :param title_text: The title that will be displayed
+        :param tabel_name: The name of the table in the Database
+        :return: Create a frame that allows you to add new locations to the specified table
+        """
         # Root
         self.root = root
 
@@ -522,6 +692,9 @@ class add_location:
         self.add_location_button.place(anchor='center', x=250, y=350)
 
     def get_values(self) -> tuple:
+        """
+        :return: a tuple with all entrys value
+        """
 
         # Get all information and save them to vars
         id_location: str = self.location_id.get()
@@ -537,6 +710,9 @@ class add_location:
         return all_informations
 
     def add_location_to_database(self) -> None:
+        """
+        :return: Save in tabel the new location
+        """
         try:
             # Connect to database
             add_location_server = SqlServer('Locations', SqlAccounts.admin)
@@ -544,7 +720,8 @@ class add_location:
             add_location_cursor = add_location_con.cursor()
 
             # Add the information in the sql table
-            add_location_query = f"INSERT INTO {self.table_name} (id, alias, country, city, address) VALUES (?, ?, ?, ?, ?)"
+            add_location_query = (f"INSERT INTO {self.table_name} (id, alias, country, city, address)"
+                                  f" VALUES (?, ?, ?, ?, ?)")
             # Get values
             values = self.get_values()
             # Execute command
