@@ -2,7 +2,7 @@ import customtkinter as ctk
 from typing import Callable
 from basic_functions import show_the_call
 from basic_classes import LeftMenu
-from Admin_Pages.test import Personal
+from Admin_Pages.personal import Personal
 
 
 class MainMenu:
@@ -17,7 +17,7 @@ class MainMenu:
                     self.root.winfo_screenheight() - 700) // 2 - 50))
 
         # Elements for LeftMenu
-        self.text_buttons_left_menu: list[str] = ['1', '2', '3', '4']
+        self.text_buttons_left_menu: list[str] = ['Personal', '2', '3', '4']
         self.functions_for_left_menu: list[Callable] = [lambda: self.change_page(Personal),
                                                         lambda: print('Button 2 was press'),
                                                         lambda: print('Button 3 was press'),
